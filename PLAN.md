@@ -53,7 +53,10 @@ Communities bought out 1962–63 (and Seashore holdouts into the ~1980s):
       verified by 8-orientation edge cross-correlation vs modern imagery)
 - [x] aerial1943 layer tiled z11-17 (1,305 tiles) + swipe control in viewer — WORKING
 - [ ] Add remaining 1943 corridor frames (6C 104-115, 4C 76-81, Volusia 2C 29-49) + 1951/1969 epochs
-- [ ] Refine georeferencing with manual GCPs (bbox placement is ~30-80 m off)
+- [x] Auto-GCP refinement (scripts/auto_gcp.py): patch NCC vs modern imagery ->
+      affine per frame. Archive bbox errors found: 6C_102 +136/-72 m, 6C_103 +282/-287 m,
+      2C_48 +12/+98 m. Post-fit residuals 14-36 m (remainder = camera tilt; TPS would improve).
+      2C_47 could not lock (marsh too changed) — kept archive placement, review manually.
 - [ ] Trim film borders (black margins) from frames before merging
 - [ ] Fix DEM project seam at easting 520000; refine town pins; build gazetteer layer
 
