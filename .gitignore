@@ -1,0 +1,4 @@
+# raw data stays local (1.5 GB) — reproducible via scripts/
+data/
+*.part
+__pycache__/

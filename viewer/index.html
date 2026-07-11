@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ghost Map — Shiloh–Allenhurst Corridor</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  html, body, #map { height: 100%; margin: 0; }
+  .panel {
+    position: absolute; top: 10px; right: 10px; z-index: 1000;
+    background: rgba(255,255,255,.95); padding: 10px 14px; border-radius: 8px;
+    font: 13px/1.5 system-ui, sans-serif; box-shadow: 0 1px 6px rgba(0,0,0,.3);
+    max-width: 240px;
+  }
+  .panel h1 { font-size: 14px; margin: 0 0 6px; }
+  .panel label { display: block; margin-top: 6px; }
+  .panel .note { color: #666; font-size: 11px; margin-top: 8px; }
+  input[type=range] { width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="panel">
+  <h1>Shiloh–Allenhurst Ghost Map</h1>
+  <label>LiDAR layer opacity</label>
+  <input id="opacity" type="range" min="0" max="100" value="80">
+  <label>1943 aerial swipe (left &#8596; right)</label>
+  <input id="swipe" type="range" min="0" max="100" value="0">
+  <div class="note">
+    Layers: multidirectional hillshade, Local Relief Model (red = raised
+    &mdash; pads, causeways, mounds; blue = cut &mdash; ditches, borrow pits),
+    Sky-View Factor (dark = enclosed/dug). Town pins are approximate &mdash;
+    refine as we georeference the 1943 aerials.
+  </div>
+</div>
+<script>
+const map = L.map('map').setView([28.80, -80.78], 12);
+new ResizeObserver(() => map.invalidateSize()).observe(document.getElementById('map'));
+
+const esri = L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  { maxZoom: 19, attribution: 'Esri World Imagery' }).addTo(map);
+const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  { maxZoom: 19, attribution: '&copy; OpenStreetMap' });
+
+function lidarLayer(name) {
+  return L.tileLayer('tiles/' + name + '/{z}/{x}/{y}.png',
+    { minZoom: 11, maxZoom: 19, maxNativeZoom: 16, opacity: 0.8 });
+}
+const hillshade = lidarLayer('hillshade');
+const lrm = lidarLayer('lrm');
+const svf = lidarLayer('svf');
+lrm.addTo(map);
+
+const aerial = L.tileLayer('tiles/aerial1943/{z}/{x}/{y}.png',
+  { minZoom: 11, maxZoom: 19, maxNativeZoom: 17, opacity: 1.0 }).addTo(map);
+
+// swipe: clip the 1943 layer container to the left portion of the view
+function updateSwipe() {
+  const c = aerial.getContainer();
+  if (!c) return;
+  const t = document.getElementById('swipe').value / 100;
+  const nw = map.containerPointToLayerPoint([0, 0]);
+  const se = map.containerPointToLayerPoint(map.getSize());
+  const clipX = nw.x + (se.x - nw.x) * t;
+  c.style.clip = 'rect(' + nw.y + 'px ' + clipX + 'px ' + se.y + 'px ' + nw.x + 'px)';
+}
+map.on('move zoom viewreset resize', updateSwipe);
+aerial.on('add load', updateSwipe);
+document.getElementById('swipe').addEventListener('input', updateSwipe);
+
+const overlays = { 'Hillshade (multidir)': hillshade, 'Local Relief Model': lrm, 'Sky-View Factor': svf, '1943 aerial (USDA)': aerial };
+L.control.layers({ 'Satellite (Esri)': esri, 'OpenStreetMap': osm }, overlays,
+  { collapsed: false }).addTo(map);
+
+document.getElementById('opacity').addEventListener('input', e => {
+  const v = e.target.value / 100;
+  [hillshade, lrm, svf].forEach(l => l.setOpacity(v));
+});
+
+// Ghost communities — approximate centers, to be refined from 1943 frames
+const sites = [
+  { n: 'Allenhurst', ll: [28.7375, -80.7550], d: 'Fishing village at Haulover Canal. Bought out 1962-63.' },
+  { n: 'Ft. Ann (user-located)', ll: [28.7480, -80.7520], d: 'Second Seminole War fort site — relocated via LiDAR. Adjust pin to your fix.' },
+  { n: 'Wilson', ll: [28.8000, -80.7850], d: 'Small farming community between Allenhurst and Shiloh.' },
+  { n: 'Clifton', ll: [28.8350, -80.7950], d: 'Black homesteader community (1890s+); Clifton Cemetery survives.' },
+  { n: 'Shiloh', ll: [28.8656, -80.8033], d: 'Citrus town at the Volusia line. Shiloh Cemetery survives on SR 3.' },
+];
+for (const s of sites) {
+  L.marker(s.ll).addTo(map).bindPopup('<b>' + s.n + '</b><br>' + s.d +
+    '<br><i>Location approximate.</i>');
+}
+</script>
+</body>
+</html>
