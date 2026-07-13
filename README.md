@@ -1,13 +1,14 @@
-# Ghost Map: North Merritt Island (Shiloh–Allenhurst corridor)
+# Ghost Map: Northern Indian River Lagoon Basin
 
-An interactive overlay of **1943 classified wartime aerial photography** and
-**LiDAR bare-earth visualizations** on the modern landscape of north Merritt
-Island, Florida — the communities of Allenhurst, Shiloh, Clifton, Wilson, and
-Orsino that were bought out for the space program in 1962–63.
+**LiDAR bare-earth visualizations** of the Space Coast — all of Brevard County
+plus southern Volusia at 2 m resolution — tuned for finding what the landscape
+remembers: the displaced communities of Allenhurst, Shiloh, Clifton, Wilson,
+and Orsino (bought out for the space program in 1962–63), WWII bombing-range
+craters, shell middens, ghost roads, and relict grove grades.
 
 **[Open the viewer](viewer/)** — toggle LiDAR layers (multidirectional
-hillshade, Local Relief Model, Sky-View Factor), drag the swipe slider to
-sweep the 1943 world across today's satellite imagery.
+hillshade, Local Relief Model, Sky-View Factor) over modern satellite imagery.
+Georeferenced historical aerials are planned as a future layer.
 
 ## Reading the LiDAR layers
 
@@ -24,9 +25,11 @@ Everything is built by the scripts in `scripts/` (Python: rasterio, scipy, PIL):
 
 1. `download_dem.py` — fetch USGS 3DEP 1 m DEM tiles (TNM API)
 2. `process_dem.py` — mosaic + hillshade/LRM/SVF, memory-safe strip processing
-3. `download_aerials.py` — fetch archival frames from UF Digital Collections
-   (DeepZoom tiles), georeference from UFDC's citation-API footprints
-4. `make_tiles.py` — cut XYZ web tiles for the Leaflet viewer
+3. `build_basin.py` / `repair_canvas.py` / `process_basin.py` — county-scale
+   streaming build (downloads ~20 GB of DEM within a ~4 GB disk budget)
+4. `make_tiles.py` / `make_pmtiles.py` — cut XYZ web tiles / pack PMTiles
+5. `download_aerials.py` — archival aerials from UF Digital Collections
+   (kept for the future historical-overlay layer; not in the current build)
 
 See [PLAN.md](PLAN.md) for data-source notes (UFDC API endpoints, USGS,
 NOAA Digital Coast) and the project roadmap.

@@ -16,6 +16,7 @@ args = sys.argv[1:]
 zooms = [a for a in args if a.isdigit()]
 LAYERS = [a for a in args if not a.isdigit()] or ["hillshade", "lrm", "svf"]
 ZMIN, ZMAX = (int(zooms[0]), int(zooms[1])) if len(zooms) == 2 else (11, 16)
+COMPOSITE = False  # merge new content over existing tiles (block-seam support)
 WEB = "EPSG:3857"
 ORIGIN = 20037508.342789244
 
@@ -35,10 +36,10 @@ def tiles_for_bounds(z, b):
     y1 = min(n - 1, int((ORIGIN - b[1]) // size))
     return range(x0, x1 + 1), range(y0, y1 + 1)
 
-for layer in LAYERS:
-    src_path = os.path.join(DERIVED, f"{layer}.tif")
-    if not os.path.exists(src_path):
-        print("skip", layer); continue
+def tile_raster(src_path, layer, zmin=ZMIN, zmax=ZMAX, composite=False):
+    """Cut XYZ tiles for one RGBA raster; optionally composite over existing."""
+    global ZMIN, ZMAX
+    ZMIN, ZMAX = zmin, zmax
     with rasterio.open(src_path) as src, WarpedVRT(
             src, crs=WEB, resampling=Resampling.bilinear, add_alpha=False) as vrt:
         b = vrt.bounds
@@ -70,8 +71,22 @@ for layer in LAYERS:
                     img = Image.fromarray(np.moveaxis(data, 0, -1), "RGBA")
                     d = os.path.join(TILE_ROOT, layer, str(z), str(x))
                     os.makedirs(d, exist_ok=True)
-                    img.save(os.path.join(d, f"{y}.png"), optimize=False)
+                    path = os.path.join(d, f"{y}.png")
+                    if composite and os.path.exists(path):
+                        old = Image.open(path).convert("RGBA")
+                        old.paste(img, (0, 0), img)   # new content over old
+                        img = old
+                    img.save(path, optimize=False)
                     count += 1
             print(f"{layer} z{z} done ({count} tiles cumulative)", flush=True)
     print(layer, "COMPLETE:", count, "tiles", flush=True)
-print("ALL TILES DONE")
+    return count
+
+if __name__ == "__main__":
+    for _layer in LAYERS:
+        _src = os.path.join(DERIVED, f"{_layer}.tif")
+        if not os.path.exists(_src):
+            print("skip", _layer)
+            continue
+        tile_raster(_src, _layer, ZMIN, ZMAX, composite=COMPOSITE)
+    print("ALL TILES DONE")

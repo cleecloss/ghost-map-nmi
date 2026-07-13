@@ -60,6 +60,19 @@ Communities bought out 1962–63 (and Seashore holdouts into the ~1980s):
 - [ ] Trim film borders (black margins) from frames before merging
 - [ ] Fix DEM project seam at easting 520000; refine town pins; build gazetteer layer
 
+## Basin v2 (2026-07-13, built overnight)
+- [x] Full northern lagoon basin: 83 USGS 1m cells -> 2m canvas (data/basin_dem_2m.tif),
+      streamed within ~4 GB disk (scripts/build_basin.py, resumable, storm-tolerant)
+- [x] Nodata repair (scripts/repair_canvas.py) — CRITICAL: USGS nodata -999999 is finite;
+      mask `< -9998` everywhere. 524M px repaired.
+- [x] Block-wise derive+tile (scripts/process_basin.py): 61,023 tiles / 3.63 GB, z11-16
+- [x] Multi-agent QA: 12 sites + 8 re-checks, all clean. FINDS: WWII bomb-crater field
+      W of Oak Hill (~28.85,-80.95; N-S swath, 10-25 m rims + one 40 m pit, best in SVF);
+      oval embanked ring earthwork near Micco (~27.87,-80.51)
+- Known: LRM red halo at coverage edges; project seam at E520000; 1m gap in St. Johns marsh
+- [ ] HOSTING: 3.63 GB exceeds GitHub Pages 1 GB — decide: PMTiles-on-R2 (recommended) vs z15 trim
+- [ ] v3 ideas: rectified aerials as epochs, gazetteer, crater-field systematic survey
+
 ## Data-access notes (UFDC)
 - Frame footprints: https://api.patron.uflib.ufl.edu/{bibid}/{vid}/citation -> aerial_tiles{} bbox corners
 - Images: DeepZoom tiles {ZOOM}?DeepZoom=/home/anubis/resources/{BIBPATH}/{VID}/{file}.jp2_files/{level}/{col}_{row}.jpg
